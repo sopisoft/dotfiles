@@ -1,0 +1,16 @@
+[env]
+TERM = "alacritty"
+
+[window]
+dynamic_padding = true
+padding = { x = 8, y = 8 }
+
+[font]
+normal = { family = "UDEV Gothic NFLG", style = "Regular" }
+bold = { family = "UDEV Gothic NFLG", style = "Bold" }
+
+size = 14.0
+offset = { x = 1, y = 1 }
+
+[selection]
+save_to_clipboard = true

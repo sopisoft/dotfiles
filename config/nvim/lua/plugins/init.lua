@@ -1,0 +1,7 @@
+require("plugins.cmp")
+require("plugins.dashboard")
+require("plugins.lsp")
+require("plugins.navigation")
+require("plugins.overseer")
+require("plugins.ui")
+require("plugins.whichkey")
