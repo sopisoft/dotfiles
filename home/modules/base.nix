@@ -18,6 +18,8 @@
   ];
 
   home.sessionVariables = {
+    CARGO_HOME = "$HOME/.cargo";
+    DOTFILES_DIR = "$HOME/dotfiles";
     EDITOR = "nvim";
     VISUAL = "nvim";
     TERMINAL = "alacritty";

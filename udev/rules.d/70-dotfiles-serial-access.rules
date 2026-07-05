@@ -1,0 +1,13 @@
+# Shared serial-device access for ROS, LiDAR, and MCU development.
+#
+# Add project- or device-specific rules as additional `*-dotfiles-*.rules`
+# files in this directory. `xtask udev apply` syncs them to
+# `/etc/udev/rules.d/`.
+
+ACTION!="add|change", GOTO="dotfiles_serial_access_end"
+SUBSYSTEM!="tty", GOTO="dotfiles_serial_access_end"
+
+KERNEL=="ttyUSB[0-9]*", GROUP="dialout", MODE="0660", TAG+="uaccess"
+KERNEL=="ttyACM[0-9]*", GROUP="dialout", MODE="0660", TAG+="uaccess"
+
+LABEL="dotfiles_serial_access_end"

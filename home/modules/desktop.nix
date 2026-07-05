@@ -21,10 +21,5 @@
     };
   };
 
-  dconf.settings."org/gnome/desktop/default-applications/terminal" = {
-    exec = "x-terminal-emulator";
-    exec-arg = "--";
-  };
-
   xdg.configFile."user-dirs.locale".text = "en_US\n";
 }

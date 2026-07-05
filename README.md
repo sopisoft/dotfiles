@@ -1,78 +1,194 @@
 # dotfiles
 
-Home Manager and flake-based dotfiles for an Ubuntu host, with a `distrobox` workflow for ROS 2 Jazzy.
+Dotfiles with Home Manager.
 
 ## Layout
 
-- [`bin/`](./bin) Small user-facing wrapper commands tracked as real files
-- [`config/`](./config) Application config for `alacritty`, `direnv`, `nix`, `nvim`, `starship`, and `zellij`
-- [`home/`](./home) Home Manager modules
-- [`scripts/`](./scripts) Bootstrap, switch, update, and ROS box setup scripts
-- [`zsh/`](./zsh) Shell startup files and `distrobox` helpers
+- `flake.nix`, `flake.lock`: Nix entrypoint
+- `Cargo.toml`, `Cargo.lock`, `src/`: Rust `xtask` task runner
+- `.cargo/config.toml`, `rust-toolchain.toml`: Rust toolchain setup
+- `home/`: Home Manager modules for host-side CLI tools and user config
+- `config/`, `zsh/`: host-side application and shell configuration
+- `distrobox/ros-jazzy.ini`: ROS Jazzy container definition
+- `udev/rules.d/`: managed udev rules copied to `/etc/udev/rules.d/`
 
-## Bootstrap
+## Commands
+
+Bootstrap after Nix is installed:
+
+```bash
+nix run path:.#xtask -- install
+```
+
+Daily commands:
+
+```bash
+xtask update
+xtask rebuild
+xtask enter
+xtask healthcheck
+xtask cleanup
+xtask udev apply
+xtask udev status
+xtask backups list
+xtask rollback [generation]
+xtask install-ros-jazzy
+xtask update-ros-jazzy
+xtask update-flake-inputs
+xtask update-neovim-plugins
+xtask install-hazkey
+```
+
+## Initial Setup
+
+Prerequisites:
+
+- Ubuntu 26 host
+- a regular user with `sudo`
+- `dialout` group membership if you use USB serial devices
+
+Install multi-user Nix first. The official Linux command is:
+
+```bash
+curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install | sh -s -- --daemon
+```
+
+After the installer finishes, open a new login shell and run:
 
 ```bash
 cd ~/dotfiles
-./scripts/bootstrap.sh
+nix run path:.#xtask -- install
 ```
 
-`bootstrap.sh` runs these steps in order:
+`nix run path:.#xtask -- install` performs:
 
-1. Install required Ubuntu/Debian host packages such as `distrobox` and `podman`, unless disabled.
-2. Install Determinate Nix if `nix` is not available yet.
-3. Write `~/.config/nix/nix.conf`.
-4. Apply the Home Manager configuration.
-5. Sync Neovim `vim.pack` plugins.
-6. Install `nvm` and a default Node.js LTS release.
-7. Create and initialize the `ros-jazzy` distrobox when enabled.
+1. Host package installation with `apt` for `distrobox`, `podman`, build tools, and related dependencies
+2. Home Manager activation
+3. Host-side package provisioning, including Rust and Node.js through Nix
+4. udev rule synchronization from `udev/rules.d/`
+5. `ros-jazzy` container creation from `distrobox/ros-jazzy.ini`
+6. ROS 2 Jazzy, `colcon`, and `rosdep` installation inside the container
+7. `rosdep update`
 
-Skip host package installation:
+Operations that require root privileges:
 
-```bash
-SKIP_HOST_PACKAGES=1 ./scripts/bootstrap.sh
-```
-
-Constrain build parallelism more aggressively:
-
-```bash
-NIX_MAX_JOBS=1 NIX_BUILD_CORES=1 ./scripts/bootstrap.sh
-```
-
-Constrain both build and evaluation parallelism:
-
-```bash
-NIX_MAX_JOBS=1 NIX_BUILD_CORES=1 NIX_EVAL_CORES=1 ./scripts/bootstrap.sh
-```
+- host package installation with `apt-get`
+- copying managed udev rules into `/etc/udev/rules.d/`
+- container-side `apt`, `rosdep init`, and `/etc/profile.d` updates
+- adding the user to `dialout`
 
 ## Daily Use
 
-Apply the current configuration:
+Re-apply only host-side configuration:
 
 ```bash
-./scripts/switch.sh
+xtask rebuild
 ```
 
-`switch.sh` builds the flake activation package directly instead of invoking the Home Manager CLI through `nix run`.
-
-Sync only Neovim `vim.pack` plugins:
+Update flake inputs, refresh Neovim plugins, re-apply Home Manager, re-apply udev rules, and update the ROS container:
 
 ```bash
-./scripts/sync-nvim-pack.sh
+xtask update
 ```
 
-Update flake-pinned sources:
+Enter the ROS environment:
 
 ```bash
-./scripts/update-sources.sh
+xtask enter
 ```
 
-Update only Neovim plugin pins:
+The shell alias is also available:
 
 ```bash
-./scripts/update-pack-plugins.sh
+ros
 ```
 
-## Notes
+`ros` calls `xtask enter`, so both paths use the same container entry logic.
 
-- Home Manager backs up unmanaged conflicting files as `*.hm-backup-*`.
+## Health Check
+
+```bash
+xtask healthcheck
+```
+
+It checks:
+
+- host commands: `nix`, `xtask`, `cargo`, `rustc`, `node`, `distrobox`, `distrobox-assemble`, `podman`, `nvim`
+- host `dialout` membership
+- managed udev rule installation status
+- presence of the `ros-jazzy` container
+- container commands: `ros2`, `colcon`, `rosdep`, `nvim`, `distrobox-host-exec`
+- host `git` invocation from inside the container
+- host `nvim` invocation from inside the container
+- visibility of `/dev/ttyUSB*` and `/dev/ttyACM*`
+
+## udev Rules
+
+Managed udev rules live in:
+
+```text
+udev/rules.d/
+```
+
+Rules must include `dotfiles-` in the filename. They are synchronized to:
+
+```text
+/etc/udev/rules.d/
+```
+
+Apply managed rules:
+
+```bash
+xtask udev apply
+```
+
+Check that installed rules match the repository copy:
+
+```bash
+xtask udev status
+```
+
+The default managed rule file is:
+
+- `udev/rules.d/70-dotfiles-serial-access.rules`
+
+It sets `dialout`, `0660`, and `uaccess` for `ttyUSB*` and `ttyACM*`.
+
+## Backups and Rollback
+
+Home Manager collision backups and imported legacy backups are stored in:
+
+```text
+~/.local/state/dotfiles/backups/generations/
+```
+
+- default retention: `10`
+- override with: `DOTFILES_BACKUP_LIMIT=<n>`
+- list generations: `xtask backups list`
+- rollback latest generation: `xtask rollback`
+- rollback a specific generation: `xtask rollback <generation>`
+
+## Troubleshooting
+
+If USB devices are not visible:
+
+1. Check `id -nG` on the host and confirm `dialout` is present.
+2. If it is missing, run `sudo usermod -aG dialout "$USER"` and log in again.
+3. Check `ls /dev/ttyUSB* /dev/ttyACM* 2>/dev/null` on the host.
+4. Run `xtask udev status`.
+5. Run `xtask healthcheck`.
+6. Add device-specific rules under `udev/rules.d/` if the generic serial rules are not enough.
+7. Check `systemctl --user status podman.socket` if rootless Podman is not working.
+
+To recreate the container:
+
+```bash
+ROS_JAZZY_BOX_REPLACE=1 xtask install-ros-jazzy
+```
+
+## Recommended Workflow
+
+- Use host-side Neovim to edit the workspace.
+- Open the workspace on the host filesystem.
+- Run `colcon build`, `ros2 run`, and other ROS commands after `xtask enter`.
+- Keep the editor on the host and the ROS runtime inside the container.

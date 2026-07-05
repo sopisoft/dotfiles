@@ -4,10 +4,11 @@ for config_file in \
     10-options.zsh \
     20-aliases.zsh \
     30-direnv.zsh \
-    40-distrobox.zsh \
-    50-ros.zsh \
-    60-prompt.zsh \
-    70-zellij.zsh
+    40-node.zsh \
+    50-distrobox.zsh \
+    60-ros-jazzy.zsh \
+    70-prompt.zsh \
+    80-zellij.zsh
 do
     if [[ -r "$HOME/.config/zsh/$config_file" ]]; then
         source "$HOME/.config/zsh/$config_file"
