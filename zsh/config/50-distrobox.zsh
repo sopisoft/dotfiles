@@ -1,5 +1,5 @@
-ros() {
-    command xtask enter -- "$@"
+jazzy() {
+    command dotfiles jazzy -- "$@"
 }
 
 if [[ -n ${container:-} || -n ${DISTROBOX_ENTER_PATH:-} || -f /run/.containerenv ]]; then

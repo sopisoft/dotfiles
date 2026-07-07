@@ -5,7 +5,7 @@ Dotfiles with Home Manager.
 ## Layout
 
 - `flake.nix`, `flake.lock`: Nix entrypoint
-- `Cargo.toml`, `Cargo.lock`, `src/`: Rust `xtask` task runner
+- `Cargo.toml`, `Cargo.lock`, `src/`: Rust `dotfiles` task runner
 - `.cargo/config.toml`, `rust-toolchain.toml`: Rust toolchain setup
 - `home/`: Home Manager modules for host-side CLI tools and user config
 - `config/`, `zsh/`: host-side application and shell configuration
@@ -17,26 +17,26 @@ Dotfiles with Home Manager.
 Bootstrap after Nix is installed:
 
 ```bash
-nix run path:.#xtask -- install
+nix run path:.#dotfiles -- install
 ```
 
 Daily commands:
 
 ```bash
-xtask update
-xtask rebuild
-xtask enter
-xtask healthcheck
-xtask cleanup
-xtask udev apply
-xtask udev status
-xtask backups list
-xtask rollback [generation]
-xtask install-ros-jazzy
-xtask update-ros-jazzy
-xtask update-flake-inputs
-xtask update-neovim-plugins
-xtask install-hazkey
+dotfiles update
+dotfiles switch
+dotfiles jazzy
+dotfiles healthcheck
+dotfiles cleanup
+dotfiles udev apply
+dotfiles udev status
+dotfiles backups list
+dotfiles rollback [generation]
+dotfiles install-ros-jazzy
+dotfiles update-ros-jazzy
+dotfiles update-flake-inputs
+dotfiles update-neovim-plugins
+dotfiles install-hazkey
 ```
 
 ## Initial Setup
@@ -57,10 +57,10 @@ After the installer finishes, open a new login shell and run:
 
 ```bash
 cd ~/dotfiles
-nix run path:.#xtask -- install
+nix run path:.#dotfiles -- install
 ```
 
-`nix run path:.#xtask -- install` performs:
+`nix run path:.#dotfiles -- install` performs:
 
 1. Host package installation with `apt` for `distrobox`, `podman`, build tools, and related dependencies
 2. Home Manager activation
@@ -82,38 +82,38 @@ Operations that require root privileges:
 Re-apply only host-side configuration:
 
 ```bash
-xtask rebuild
+dotfiles switch
 ```
 
 Update flake inputs, refresh Neovim plugins, re-apply Home Manager, re-apply udev rules, and update the ROS container:
 
 ```bash
-xtask update
+dotfiles update
 ```
 
 Enter the ROS environment:
 
 ```bash
-xtask enter
+dotfiles jazzy
 ```
 
 The shell alias is also available:
 
 ```bash
-ros
+jazzy
 ```
 
-`ros` calls `xtask enter`, so both paths use the same container entry logic.
+`jazzy` calls `dotfiles jazzy`, so both paths use the same container entry logic.
 
 ## Health Check
 
 ```bash
-xtask healthcheck
+dotfiles healthcheck
 ```
 
 It checks:
 
-- host commands: `nix`, `xtask`, `cargo`, `rustc`, `node`, `distrobox`, `distrobox-assemble`, `podman`, `nvim`
+- host commands: `nix`, `dotfiles`, `cargo`, `rustc`, `node`, `distrobox`, `distrobox-assemble`, `podman`, `nvim`
 - host `dialout` membership
 - managed udev rule installation status
 - presence of the `ros-jazzy` container
@@ -139,13 +139,13 @@ Rules must include `dotfiles-` in the filename. They are synchronized to:
 Apply managed rules:
 
 ```bash
-xtask udev apply
+dotfiles udev apply
 ```
 
 Check that installed rules match the repository copy:
 
 ```bash
-xtask udev status
+dotfiles udev status
 ```
 
 The default managed rule file is:
@@ -164,9 +164,9 @@ Home Manager collision backups and imported legacy backups are stored in:
 
 - default retention: `10`
 - override with: `DOTFILES_BACKUP_LIMIT=<n>`
-- list generations: `xtask backups list`
-- rollback latest generation: `xtask rollback`
-- rollback a specific generation: `xtask rollback <generation>`
+- list generations: `dotfiles backups list`
+- rollback latest generation: `dotfiles rollback`
+- rollback a specific generation: `dotfiles rollback <generation>`
 
 ## Troubleshooting
 
@@ -175,20 +175,20 @@ If USB devices are not visible:
 1. Check `id -nG` on the host and confirm `dialout` is present.
 2. If it is missing, run `sudo usermod -aG dialout "$USER"` and log in again.
 3. Check `ls /dev/ttyUSB* /dev/ttyACM* 2>/dev/null` on the host.
-4. Run `xtask udev status`.
-5. Run `xtask healthcheck`.
+4. Run `dotfiles udev status`.
+5. Run `dotfiles healthcheck`.
 6. Add device-specific rules under `udev/rules.d/` if the generic serial rules are not enough.
 7. Check `systemctl --user status podman.socket` if rootless Podman is not working.
 
 To recreate the container:
 
 ```bash
-ROS_JAZZY_BOX_REPLACE=1 xtask install-ros-jazzy
+ROS_JAZZY_BOX_REPLACE=1 dotfiles install-ros-jazzy
 ```
 
 ## Recommended Workflow
 
 - Use host-side Neovim to edit the workspace.
 - Open the workspace on the host filesystem.
-- Run `colcon build`, `ros2 run`, and other ROS commands after `xtask enter`.
+- Run `colcon build`, `ros2 run`, and other ROS commands after `dotfiles jazzy`.
 - Keep the editor on the host and the ROS runtime inside the container.

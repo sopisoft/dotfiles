@@ -14,7 +14,7 @@ const HOST_COMMANDS: &[&str] = &[
     "nvim",
     "podman",
     "rustc",
-    "xtask",
+    "dotfiles",
 ];
 
 const CONTAINER_COMMANDS: &[&str] = &["ros2", "colcon", "rosdep", "nvim", "distrobox-host-exec"];

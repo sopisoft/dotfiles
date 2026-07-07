@@ -2,6 +2,7 @@ use anyhow::{Context, Result, bail};
 use std::env;
 use std::ffi::{OsStr, OsString};
 use std::fs;
+use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus};
 
@@ -40,6 +41,7 @@ impl HostContext {
             .and_then(|value| value.parse::<usize>().ok())
             .filter(|value| *value > 0)
             .unwrap_or(10);
+        let backup_root = resolve_backup_root(&passwd.home);
 
         Ok(Self {
             repo_root,
@@ -48,7 +50,7 @@ impl HostContext {
             target_home: passwd.home.clone(),
             target_uid: passwd.uid,
             target_config_home: passwd.home.join(".config"),
-            backup_root: passwd.home.join(".local/state/dotfiles/backups"),
+            backup_root,
             backup_limit,
         })
     }
@@ -167,6 +169,38 @@ fn is_dotfiles_root(path: &Path) -> bool {
     path.join("flake.nix").is_file()
         && path.join("home/home.nix").is_file()
         && path.join("Cargo.toml").is_file()
+}
+
+fn resolve_backup_root(target_home: &Path) -> PathBuf {
+    let preferred = target_home.join(".local/state/dotfiles/backups");
+    if is_writable_directory(&preferred) {
+        return preferred;
+    }
+
+    target_home.join(".local/state/dotfiles-user/backups")
+}
+
+fn is_writable_directory(path: &Path) -> bool {
+    let Ok(metadata) = fs::metadata(path) else {
+        return false;
+    };
+    if !metadata.is_dir() {
+        return false;
+    }
+
+    let test_path = path.join(".dotfiles-write-test");
+    match OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .open(&test_path)
+    {
+        Ok(file) => {
+            drop(file);
+            let _ = fs::remove_file(test_path);
+            true
+        }
+        Err(_) => false,
+    }
 }
 
 pub fn host_current_exe() -> Result<PathBuf> {

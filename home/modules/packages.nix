@@ -1,4 +1,4 @@
-{ pkgs, xtaskPackage, ... }: {
+{ pkgs, dotfilesPackage, ... }: {
   home.packages = with pkgs; [
     alacritty
     cargo
@@ -18,7 +18,7 @@
     tmux
     udev-gothic-nf
     unzip
-    xtaskPackage
+    dotfilesPackage
     zsh
   ];
 }

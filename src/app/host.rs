@@ -44,7 +44,7 @@ pub fn update(context: &HostContext, skip_ros_jazzy: bool) -> Result<()> {
     require_nix(context)?;
     update_flake_inputs(context)?;
     nvim::update_neovim_plugins_as_target(context)?;
-    rebuild(context)?;
+    switch(context)?;
     udev::apply(context)?;
     if skip_ros_jazzy {
         return Ok(());
@@ -52,18 +52,19 @@ pub fn update(context: &HostContext, skip_ros_jazzy: bool) -> Result<()> {
     if container::container_exists(context)? {
         update_ros_jazzy(context)
     } else {
-        eprintln!("warning: ROS Jazzy distrobox is missing. Run `xtask install-ros-jazzy`.");
+        eprintln!("warning: ROS Jazzy distrobox is missing. Run `dotfiles install-ros-jazzy`.");
         Ok(())
     }
 }
 
-pub fn rebuild(context: &HostContext) -> Result<()> {
+pub fn switch(context: &HostContext) -> Result<()> {
     require_nix(context)?;
     home_manager::apply_home_manager(context)
 }
 
-pub fn enter(context: &HostContext, args: &[String]) -> Result<()> {
+pub fn jazzy(context: &HostContext, args: &[String]) -> Result<()> {
     container::require_container(context)?;
+    prepare_jazzy_devices()?;
     let launcher = context.preferred_container_launcher()?;
     let mut hook_args = vec![
         String::from("internal"),
@@ -81,6 +82,35 @@ pub fn enter(context: &HostContext, args: &[String]) -> Result<()> {
     command.arg(launcher);
     command.args(hook_args);
     system::exec_replace(command)
+}
+
+fn prepare_jazzy_devices() -> Result<()> {
+    let mut changed = false;
+    for prefix in ["ttyUSB", "ttyACM"] {
+        for entry in std::fs::read_dir("/dev")
+            .with_context(|| "failed to read /dev for device permission adjustment")?
+        {
+            let path = entry?.path();
+            let Some(name) = path.file_name().and_then(|value| value.to_str()) else {
+                continue;
+            };
+            if !name.starts_with(prefix) {
+                continue;
+            }
+            changed = true;
+            system::run_sudo([
+                "chmod",
+                "0666",
+                path.to_str().context("device path is not valid utf-8")?,
+            ])
+            .with_context(|| format!("failed to adjust permissions for {}", path.display()))?;
+        }
+    }
+
+    if !changed {
+        eprintln!("warning: no /dev/ttyUSB* or /dev/ttyACM* devices found");
+    }
+    Ok(())
 }
 
 pub fn cleanup(context: &HostContext) -> Result<()> {
@@ -160,6 +190,6 @@ fn install_host_packages(context: &HostContext) -> Result<()> {
 
 fn require_nix(context: &HostContext) -> Result<std::path::PathBuf> {
     home_manager::resolve_nix_bin(context).context(
-        "nix binary not found. Install multi-user Nix first, then run `nix run path:.#xtask -- install` from the repository root.",
+        "nix binary not found. Install multi-user Nix first, then run `nix run path:.#dotfiles -- install` from the repository root.",
     )
 }

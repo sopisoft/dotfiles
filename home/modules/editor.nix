@@ -1,12 +1,20 @@
-{ lib, pkgs, xtaskPackage, ... }: {
-  xdg.configFile."nvim" = {
-    source = ../../config/nvim;
-    recursive = true;
+{ config, lib, pkgs, dotfilesPackage, ... }: {
+  home.file = {
+    ".config/nvim/init.lua".source = ../../config/nvim/init.lua;
+
+    ".config/nvim/lua" = {
+      source = ../../config/nvim/lua;
+      recursive = true;
+    };
+
+    ".config/nvim/nvim-pack-lock.json".source =
+      config.lib.file.mkOutOfStoreSymlink
+        "${config.home.homeDirectory}/dotfiles/config/nvim/nvim-pack-lock.json";
   };
 
   home.activation.syncNvimPack = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
     PATH=${lib.makeBinPath [ pkgs.git pkgs.neovim ]}:$PATH \
       NVIM_BIN=${pkgs.neovim}/bin/nvim \
-      ${xtaskPackage}/bin/xtask sync-nvim-pack
+      ${dotfilesPackage}/bin/dotfiles sync-nvim-pack
   '';
 }

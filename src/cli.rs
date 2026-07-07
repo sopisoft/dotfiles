@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 #[derive(Debug, Parser)]
-#[command(name = "xtask")]
+#[command(name = "dotfiles")]
 #[command(about = "Dotfiles task runner and runtime helper")]
 pub struct Cli {
     #[command(subcommand)]
@@ -19,8 +19,8 @@ pub enum Command {
         #[arg(long, default_value_t = false)]
         skip_ros_jazzy: bool,
     },
-    Rebuild,
-    Enter {
+    Switch,
+    Jazzy {
         #[arg(trailing_var_arg = true)]
         args: Vec<String>,
     },

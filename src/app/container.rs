@@ -68,7 +68,7 @@ pub fn require_container(context: &HostContext) -> Result<()> {
         Ok(())
     } else {
         bail!(
-            "distrobox container {ROS_JAZZY_CONTAINER_NAME} does not exist. Run `xtask install-ros-jazzy`."
+            "distrobox container {ROS_JAZZY_CONTAINER_NAME} does not exist. Run `dotfiles install-ros-jazzy`."
         )
     }
 }

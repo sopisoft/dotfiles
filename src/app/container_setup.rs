@@ -103,7 +103,7 @@ fn ensure_ros_apt_source() -> Result<()> {
 }
 
 fn ensure_ros_packages() -> Result<()> {
-    apt_install_if_missing(&["ros-jazzy-ros-base"])
+    apt_install_if_missing(&["ros-jazzy-desktop"])
 }
 
 fn ensure_ros_profile() -> Result<()> {

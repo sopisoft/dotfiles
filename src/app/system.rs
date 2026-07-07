@@ -71,6 +71,19 @@ pub fn command_exists(command: &str) -> bool {
         .unwrap_or(false)
 }
 
+pub fn can_run_privileged_command() -> bool {
+    if is_current_root().unwrap_or(false) {
+        return true;
+    }
+
+    ProcessCommand::new("sudo")
+        .arg("-n")
+        .arg("true")
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false)
+}
+
 pub fn command_exists_as_target(context: &HostContext, command: &str) -> Result<bool> {
     let status = context
         .command_as_target("bash")

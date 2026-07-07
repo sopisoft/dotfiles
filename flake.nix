@@ -25,8 +25,8 @@
         let
           pkgs = mkPkgs system;
         in {
-          xtask = pkgs.pkgsStatic.rustPlatform.buildRustPackage {
-            pname = "dotfiles-xtask";
+          dotfiles = pkgs.pkgsStatic.rustPlatform.buildRustPackage {
+            pname = "dotfiles";
             version = "0.1.0";
             src = pkgs.lib.sourceByRegex ./. [
               "^Cargo\\.lock$"
@@ -36,15 +36,15 @@
             cargoLock.lockFile = ./Cargo.lock;
             doCheck = false;
           };
-          default = self.packages.${system}.xtask;
+          default = self.packages.${system}.dotfiles;
         });
 
       apps = forAllSystems (system: {
-        xtask = {
+        dotfiles = {
           type = "app";
-          program = "${self.packages.${system}.xtask}/bin/xtask";
+          program = "${self.packages.${system}.dotfiles}/bin/dotfiles";
         };
-        default = self.apps.${system}.xtask;
+        default = self.apps.${system}.dotfiles;
       });
 
       devShells = forAllSystems (system:
@@ -71,7 +71,7 @@
             inherit pkgs;
             extraSpecialArgs = {
               inherit username;
-              xtaskPackage = self.packages.${system}.xtask;
+              dotfilesPackage = self.packages.${system}.dotfiles;
             };
             modules = [
               ./home/home.nix

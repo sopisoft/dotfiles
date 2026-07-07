@@ -1,4 +1,10 @@
 { ... }: {
+  dconf.settings = {
+    "org/gnome/settings-daemon/plugins/media-keys" = {
+      terminal = [ "<Primary><Alt>t" ];
+    };
+  };
+
   xdg.userDirs = {
     enable = true;
     createDirectories = true;

@@ -20,7 +20,7 @@ const MANAGED_TARGETS: &[&str] = &[
     ".zshenv",
     ".zprofile",
     ".zshrc",
-    ".local/bin/xtask",
+    ".local/bin/dotfiles",
     ".local/bin/vim",
     ".local/bin/x-terminal-emulator",
     ".config/alacritty",
