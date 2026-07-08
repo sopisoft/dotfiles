@@ -1,9 +1,16 @@
-{ pkgs, dotfilesPackage, ... }: {
+{
+  pkgs,
+  dotfilesPackage,
+  ...
+}: {
   home.packages = with pkgs; [
     alacritty
     cargo
     clippy
     curl
+    fcitx5
+    fcitx5-gtk
+    qt6Packages.fcitx5-qt
     distrobox
     fd
     fontconfig

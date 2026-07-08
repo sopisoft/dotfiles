@@ -1,4 +1,4 @@
-{ ... }: {
+{...}: {
   home.stateVersion = "25.05";
 
   programs.home-manager.enable = true;
@@ -8,7 +8,7 @@
   fonts.fontconfig = {
     enable = true;
     defaultFonts = {
-      monospace = [ "UDEV Gothic NFLG" ];
+      monospace = ["UDEV Gothic NFLG"];
     };
   };
 

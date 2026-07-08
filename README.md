@@ -23,6 +23,7 @@ nix run path:.#dotfiles -- install
 Daily commands:
 
 ```bash
+nix fmt .
 dotfiles update
 dotfiles switch
 dotfiles jazzy

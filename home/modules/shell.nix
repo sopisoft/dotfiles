@@ -1,4 +1,8 @@
-{ pkgs, dotfilesPackage, ... }: {
+{
+  pkgs,
+  dotfilesPackage,
+  ...
+}: {
   home.file = {
     ".zshenv".source = ../../zsh/.zshenv;
     ".zprofile".source = ../../zsh/.zprofile;
