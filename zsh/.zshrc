@@ -4,8 +4,6 @@ for config_file in \
     10-options.zsh \
     20-aliases.zsh \
     30-direnv.zsh \
-    50-distrobox.zsh \
-    60-ros-jazzy.zsh \
     70-prompt.zsh \
     80-zellij.zsh
 do

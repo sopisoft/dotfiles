@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use std::ffi::OsStr;
 use std::fs as std_fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use time::{format_description::FormatItem, macros::format_description};
 use walkdir::WalkDir;
 
@@ -24,13 +24,16 @@ const MANAGED_TARGETS: &[&str] = &[
     ".local/bin/vim",
     ".local/bin/x-terminal-emulator",
     ".config/alacritty",
+    ".config/autostart/fcitx5.desktop",
     ".config/direnv",
     ".config/environment.d",
     ".config/fontconfig/conf.d",
     ".config/gnome-xdg-terminals.list",
+    ".config/fcitx5/profile",
     ".config/mozilla/firefox",
     ".config/nix",
     ".config/nvim",
+    ".config/plasma-workspace/env/fcitx5.sh",
     ".config/starship.toml",
     ".config/user-dirs.conf",
     ".config/user-dirs.dirs",
@@ -38,12 +41,12 @@ const MANAGED_TARGETS: &[&str] = &[
     ".config/xdg-terminals.list",
     ".config/zellij",
     ".config/zsh",
+    ".local/bin/start-fcitx5",
 ];
 
 const LEGACY_TARGETS: &[&str] = &[
     ".config/zsh/35-nvm.zsh",
     ".config/zsh/40-node-nvm.zsh",
-    ".config/zsh/40-distrobox.zsh",
     ".config/zsh/50-ros.zsh",
     ".config/zsh/60-prompt.zsh",
     ".config/zsh/70-zellij.zsh",
@@ -124,17 +127,6 @@ pub fn rollback(context: &HostContext, generation: Option<&str>) -> Result<()> {
         copy_path(&stored_path, &original_path)?;
     }
     Ok(())
-}
-
-pub fn backup_path(context: &HostContext, path: &Path, reason: &str) -> Result<()> {
-    if !path.exists() && !symlink_exists(path) {
-        return Ok(());
-    }
-
-    let mut generation = BackupGeneration::create(context, reason)?;
-    generation.backup_copy(path)?;
-    generation.finish()?;
-    prune_backups(context)
 }
 
 pub fn import_legacy_backups(context: &HostContext) -> Result<()> {

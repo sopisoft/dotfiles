@@ -43,13 +43,6 @@ impl BackupGeneration {
         Ok(())
     }
 
-    pub(super) fn backup_copy(&mut self, source: &Path) -> Result<()> {
-        let stored_path = self.stored_path_for(source)?;
-        backup_fs::copy_path(source, &stored_path)?;
-        self.record_entry(source, stored_path);
-        Ok(())
-    }
-
     pub(super) fn ingest_existing_backup(
         &mut self,
         source: &Path,

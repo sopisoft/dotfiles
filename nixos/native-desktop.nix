@@ -4,9 +4,8 @@
   ...
 }: {
   imports = [
-    ./hardware-disk2.nix
+    ./native-filesystems.nix
     ./modules/base.nix
-    ./modules/xrdp-xfce.nix
   ];
 
   boot.loader = {
@@ -22,7 +21,7 @@
   };
 
   networking = {
-    hostName = "nixos-disk2";
+    hostName = "nixos-native";
     networkmanager.enable = true;
   };
 

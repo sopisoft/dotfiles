@@ -6,8 +6,6 @@ use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus};
 
-pub const ROS_JAZZY_CONTAINER_NAME: &str = "ros-jazzy";
-
 #[derive(Debug, Clone)]
 pub struct HostContext {
     pub repo_root: PathBuf,
@@ -57,15 +55,6 @@ impl HostContext {
 
     pub fn is_target_user(&self) -> bool {
         self.current_user == self.target_user
-    }
-
-    pub fn preferred_container_launcher(&self) -> Result<PathBuf> {
-        let exe = host_current_exe()?;
-        host_path_for_container(&exe)
-    }
-
-    pub fn host_current_exe(&self) -> Result<PathBuf> {
-        host_current_exe()
     }
 
     pub fn target_path(&self) -> OsString {
@@ -209,40 +198,6 @@ pub fn host_current_exe() -> Result<PathBuf> {
         return Ok(stripped.to_path_buf());
     }
     Ok(current_exe)
-}
-
-pub fn host_path_for_container(path: &Path) -> Result<PathBuf> {
-    let resolved = match fs::canonicalize(path) {
-        Ok(path) => path,
-        Err(_) => {
-            let metadata = fs::symlink_metadata(path)
-                .with_context(|| format!("failed to stat {}", path.display()))?;
-            if metadata.file_type().is_symlink() {
-                let target = fs::read_link(path).with_context(|| {
-                    format!("failed to read symlink target for {}", path.display())
-                })?;
-                if target.is_absolute() {
-                    target
-                } else {
-                    path.parent()
-                        .context("missing symlink parent")?
-                        .join(target)
-                }
-            } else {
-                path.to_path_buf()
-            }
-        }
-    };
-
-    if resolved.starts_with("/run/host") {
-        return Ok(resolved);
-    }
-
-    Ok(PathBuf::from("/run/host").join(
-        resolved
-            .strip_prefix(Path::new("/"))
-            .context("failed to relativize host path for container")?,
-    ))
 }
 
 #[derive(Debug, Clone)]

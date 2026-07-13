@@ -1,9 +1,8 @@
 use super::system;
-use crate::context::HostContext;
 use anyhow::{Context, Result, bail};
 use std::env;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command as ProcessCommand;
 use tempfile::tempdir;
 
@@ -22,16 +21,6 @@ pub fn update_neovim_plugins() -> Result<()> {
     } else {
         bail!("failed to update Neovim plugins with status {status}")
     }
-}
-
-pub fn update_neovim_plugins_as_target(context: &HostContext) -> Result<()> {
-    let exe = context.host_current_exe()?;
-    let status = context
-        .command_as_target(&exe)
-        .arg("update-neovim-plugins")
-        .status()
-        .context("failed to update Neovim plugins as target user")?;
-    context.status_ok(status, "update-neovim-plugins")
 }
 
 pub fn sync_nvim_pack() -> Result<()> {
@@ -79,7 +68,7 @@ fn xdg_data_home() -> PathBuf {
         .unwrap_or_else(|_| system::home_dir().join(".local/share"))
 }
 
-fn make_pack_lock_writable(staging_config_home: &PathBuf) -> Result<()> {
+fn make_pack_lock_writable(staging_config_home: &Path) -> Result<()> {
     let lock_path = staging_config_home.join("nvim/nvim-pack-lock.json");
     if !lock_path.exists() {
         return Ok(());

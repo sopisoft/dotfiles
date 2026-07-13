@@ -5,7 +5,6 @@
 }: {
   imports = [
     ./modules/base.nix
-    ./modules/xrdp-xfce.nix
   ];
 
   wsl = {

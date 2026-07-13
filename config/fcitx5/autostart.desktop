@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Fcitx 5
-Exec=fcitx5 --disable=wayland,waylandim -d --replace
+Exec=start-fcitx5
 X-GNOME-Autostart-enabled=true
 NoDisplay=true
 Hidden=false

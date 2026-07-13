@@ -37,27 +37,17 @@ in {
 
   xdg.configFile."user-dirs.locale".source = ../../config/desktop/user-dirs.locale;
   xdg.configFile."dbus-1/session.conf".source = ../../config/desktop/dbus-session.conf;
-  xdg.configFile."dotfiles/session-env.sh" = {
-    source = ../../config/xrdp/session-env.sh;
-    executable = true;
-  };
-  xdg.configFile."dotfiles/start-xfce-session.sh" = {
-    source = ../../config/desktop/start-xfce-session.sh;
+  xdg.configFile."plasma-workspace/env/fcitx5.sh" = {
+    source = ../../config/fcitx5/environment.sh;
     executable = true;
   };
 
-  xdg.configFile."plasma-workspace/env/fcitx5.sh" = {
-    source = ../../config/desktop/fcitx5.sh;
+  home.file.".local/bin/start-fcitx5" = {
+    source = ../../config/fcitx5/start-fcitx5.sh;
     executable = true;
   };
 
   xdg.configFile."autostart/fcitx5.desktop".source = ../../config/fcitx5/autostart.desktop;
 
   xdg.configFile."fcitx5/profile".source = ../../config/fcitx5/profile;
-
-  home.file.".Xclients" = {
-    force = true;
-    executable = true;
-    source = ../../config/desktop/Xclients;
-  };
 }

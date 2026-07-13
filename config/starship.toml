@@ -33,8 +33,8 @@ truncation_symbol = "…/"
 "Pictures" = " "
 
 [custom.ros]
-when = 'test -n "${STARSHIP_DISTROBOX:-}"'
-command = 'printf "[ros]"'
+when = 'test -n "${PIXI_PROJECT_ROOT:-}"'
+command = 'printf "[pixi]"'
 format = "[$output]($style)"
 style = "fg:#090c0c bg:#a3aed2"
 

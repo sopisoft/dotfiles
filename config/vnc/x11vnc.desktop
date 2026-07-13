@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=x11vnc
+Comment=Share the current X11 session over VNC
+Exec=start-vnc-session
+Terminal=false
+X-GNOME-Autostart-enabled=true

@@ -11,7 +11,6 @@ const SYSTEM_RULES_DIR: &str = "/etc/udev/rules.d";
 
 pub fn apply(context: &HostContext) -> Result<()> {
     if !system::can_run_privileged_command() {
-        eprintln!("warning: skipping udev rule installation; sudo is unavailable");
         return Ok(());
     }
 

@@ -1,4 +1,4 @@
-{lib, ...}: let
+{...}: let
   defaults = import ../../config/defaults.nix;
 in {
   home.stateVersion = "25.05";
@@ -6,11 +6,6 @@ in {
   programs.home-manager.enable = true;
 
   xdg.enable = true;
-
-  home.file."dotfiles" = {
-    source = lib.cleanSource ../..;
-    recursive = true;
-  };
 
   fonts.fontconfig = {
     enable = true;

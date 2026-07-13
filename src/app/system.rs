@@ -2,14 +2,8 @@ use crate::context::HostContext;
 use anyhow::{Context, Result, bail};
 use std::env;
 use std::fs;
-use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command as ProcessCommand;
-
-pub fn exec_replace(mut command: ProcessCommand) -> Result<()> {
-    let error = command.exec();
-    bail!("failed to exec command: {error}")
-}
 
 pub fn run_sudo<I, S>(args: I) -> Result<()>
 where
@@ -47,19 +41,6 @@ where
     }
 }
 
-pub fn read_command_stdout<const N: usize>(args: [&str; N]) -> Result<String> {
-    let mut iter = args.into_iter();
-    let program = iter.next().context("missing program")?;
-    let output = ProcessCommand::new(program)
-        .args(iter)
-        .output()
-        .with_context(|| format!("failed to execute {program}"))?;
-    if !output.status.success() {
-        bail!("{program} failed with status {}", output.status);
-    }
-    String::from_utf8(output.stdout).context("command output is not valid utf-8")
-}
-
 pub fn command_exists(command: &str) -> bool {
     ProcessCommand::new("bash")
         .arg("-lc")
@@ -79,6 +60,8 @@ pub fn can_run_privileged_command() -> bool {
     ProcessCommand::new("sudo")
         .arg("-n")
         .arg("true")
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
         .status()
         .map(|status| status.success())
         .unwrap_or(false)

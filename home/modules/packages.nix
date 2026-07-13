@@ -23,11 +23,9 @@
     hazkeyPackage
     qt6Packages.fcitx5-configtool
     qt6Packages.fcitx5-qt
-    distrobox
     fd
     file
     fontconfig
-    fuse-overlayfs
     git
     gnupg
     gnumake
@@ -35,6 +33,7 @@
     jq
     lld
     neovim
+    pixi
     nodejs
     papirus-icon-theme
     pavucontrol
@@ -47,7 +46,7 @@
     rustc
     rustfmt
     shadow
-    slirp4netns
+    x11vnc
     thunar
     tmux
     noto-fonts-cjk-sans

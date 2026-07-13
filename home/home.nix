@@ -8,5 +8,6 @@
     ./modules/browser.nix
     ./modules/terminal.nix
     ./modules/editor.nix
+    ./modules/vnc.nix
   ];
 }

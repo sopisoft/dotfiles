@@ -76,7 +76,7 @@
 
     formatter = forAllSystems (system: (mkPkgs system).alejandra);
 
-    nixosConfigurations.disk2-desktop = let
+    nixosConfigurations.native-desktop = let
       system = "x86_64-linux";
     in
       nixpkgs.lib.nixosSystem {
@@ -86,7 +86,7 @@
           hazkeyPackage = self.packages.${system}.hazkey;
         };
         modules = [
-          ./nixos/disk2-desktop.nix
+          ./nixos/native-desktop.nix
           home-manager.nixosModules.home-manager
           {
             home-manager.useGlobalPkgs = true;

@@ -1,6 +1,3 @@
-mod container;
-mod container_setup;
-mod hazkey;
 mod healthcheck;
 mod hooks;
 mod host;
@@ -11,8 +8,7 @@ mod udev;
 
 use crate::backup;
 use crate::cli::{
-    BackupCommand, Cli, Command, ContainerCommand, HookCommand, InternalCommand, RemoteCommand,
-    UdevCommand,
+    BackupCommand, Cli, Command, HookCommand, InternalCommand, RemoteCommand, UdevCommand,
 };
 use crate::context::HostContext;
 use anyhow::Result;
@@ -27,18 +23,11 @@ pub fn run() -> Result<()> {
 fn dispatch_cli(cli: Cli) -> Result<()> {
     let context = HostContext::detect()?;
     match cli.command {
-        Command::Install {
-            skip_host_packages,
-            skip_ros_jazzy,
-        } => host::install(&context, skip_host_packages, skip_ros_jazzy),
-        Command::Update { skip_ros_jazzy } => host::update(&context, skip_ros_jazzy),
+        Command::Install { skip_host_packages } => host::install(&context, skip_host_packages),
+        Command::Update => host::update(&context),
         Command::Switch => host::switch(&context),
-        Command::Jazzy { args } => host::jazzy(&context, &args),
         Command::Healthcheck => healthcheck::host(&context),
         Command::Cleanup => host::cleanup(&context),
-        Command::InstallRosJazzy => host::install_ros_jazzy(&context),
-        Command::UpdateRosJazzy => host::update_ros_jazzy(&context),
-        Command::InstallHazkey => hazkey::install(&context),
         Command::UpdateFlakeInputs => host::update_flake_inputs(&context),
         Command::UpdateNeovimPlugins => nvim::update_neovim_plugins(),
         Command::SyncNvimPack => nvim::sync_nvim_pack(),
@@ -76,14 +65,8 @@ fn backups(context: &HostContext, command: BackupCommand) -> Result<()> {
     }
 }
 
-fn dispatch_internal(context: &HostContext, command: InternalCommand) -> Result<()> {
+fn dispatch_internal(_context: &HostContext, command: InternalCommand) -> Result<()> {
     match command {
-        InternalCommand::Container { command } => match command {
-            ContainerCommand::Install => container::install_ros_jazzy_internal(),
-            ContainerCommand::Update => container::update_ros_jazzy_internal(),
-            ContainerCommand::Healthcheck => healthcheck::container_ros_jazzy(context),
-            ContainerCommand::Cleanup => container::cleanup_ros_jazzy_internal(),
-        },
         InternalCommand::Hook { command } => match command {
             HookCommand::DispatchEnter { args } | HookCommand::EnterLogin { args } => {
                 hooks::run_enter_login(&args.iter().map(OsString::from).collect::<Vec<_>>())

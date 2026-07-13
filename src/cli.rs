@@ -12,23 +12,11 @@ pub enum Command {
     Install {
         #[arg(long, default_value_t = false)]
         skip_host_packages: bool,
-        #[arg(long, default_value_t = false)]
-        skip_ros_jazzy: bool,
     },
-    Update {
-        #[arg(long, default_value_t = false)]
-        skip_ros_jazzy: bool,
-    },
+    Update,
     Switch,
-    Jazzy {
-        #[arg(trailing_var_arg = true)]
-        args: Vec<String>,
-    },
     Healthcheck,
     Cleanup,
-    InstallRosJazzy,
-    UpdateRosJazzy,
-    InstallHazkey,
     UpdateFlakeInputs,
     UpdateNeovimPlugins,
     SyncNvimPack,
@@ -76,22 +64,10 @@ pub enum RemoteCommand {
 
 #[derive(Debug, Subcommand)]
 pub enum InternalCommand {
-    Container {
-        #[command(subcommand)]
-        command: ContainerCommand,
-    },
     Hook {
         #[command(subcommand)]
         command: HookCommand,
     },
-}
-
-#[derive(Debug, Subcommand)]
-pub enum ContainerCommand {
-    Install,
-    Update,
-    Healthcheck,
-    Cleanup,
 }
 
 #[derive(Debug, Subcommand)]
