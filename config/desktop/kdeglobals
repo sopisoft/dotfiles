@@ -1,0 +1,12 @@
+[General]
+fixed=UDEV Gothic NFLG,10,-1,5,50,0,0,0,0,0
+font=UDEV Gothic NFLG,10,-1,5,50,0,0,0,0,0
+menuFont=UDEV Gothic NFLG,10,-1,5,50,0,0,0,0,0
+smallestReadableFont=UDEV Gothic NFLG,9,-1,5,50,0,0,0,0,0
+toolBarFont=UDEV Gothic NFLG,10,-1,5,50,0,0,0,0,0
+
+[Icons]
+Theme=Papirus
+
+[KDE]
+widgetStyle=Breeze

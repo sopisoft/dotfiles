@@ -1,195 +1,128 @@
 # dotfiles
 
-Dotfiles with Home Manager.
+Nix Flake and Home Manager configuration for a Linux workstation. The user
+configuration is distribution-independent and can be used on a native Linux
+installation or inside WSL. NixOS system configurations are provided as an
+optional reference for machines that use NixOS directly.
 
-## Layout
+## Structure
 
-- `flake.nix`, `flake.lock`: Nix entrypoint
-- `Cargo.toml`, `Cargo.lock`, `src/`: Rust `dotfiles` task runner
-- `.cargo/config.toml`, `rust-toolchain.toml`: Rust toolchain setup
-- `home/`: Home Manager modules for host-side CLI tools and user config
-- `config/`, `zsh/`: host-side application and shell configuration
-- `distrobox/ros-jazzy.ini`: ROS Jazzy container definition
-- `udev/rules.d/`: managed udev rules copied to `/etc/udev/rules.d/`
+- `flake.nix`: packages, Home Manager configurations, and NixOS configurations
+- `config/`: canonical application configuration files and shared defaults
+- `home/`: Home Manager modules
+- `nixos/`: reusable NixOS modules and machine configurations
+- `src/`: the `dotfiles` task runner
+- `distrobox/`: optional ROS Jazzy container definition
+- `udev/`: optional host udev rules
 
-## Commands
+The canonical input method is Fcitx5 with Hazkey as the default Japanese input
+method. Mozc remains available as a fallback. Hazkey, fonts, desktop packages,
+shell tools, Neovim, and application configuration are installed through Nix
+and Home Manager. The remote desktop path is the host distribution's xrdp on
+top of an X11 XFCE session so Windows can connect with the built-in Remote
+Desktop client.
 
-Bootstrap after Nix is installed:
+## Requirements
 
-```bash
-nix run path:.#dotfiles -- install
-```
+- Linux, either native or WSL
+- a regular user account
+- multi-user Nix with flakes enabled
+- `sudo` only for optional udev rules, system configuration, or device access
 
-Daily commands:
+Ubuntu, Fedora, and other distributions are supported because the user-level
+packages and configuration are managed by Nix/Home Manager rather than a
+distribution package manager. xrdp still needs system services and PAM under
+`/etc`, so `dotfiles` manages a small integration layer there when privileges
+are available. Unlike normal user packages, xrdp is intentionally installed
+from the host distribution so PAM, systemd, and Xorg modules match the host.
 
-```bash
-nix fmt .
-dotfiles update
-dotfiles switch
-dotfiles jazzy
-dotfiles healthcheck
-dotfiles cleanup
-dotfiles udev apply
-dotfiles udev status
-dotfiles backups list
-dotfiles rollback [generation]
-dotfiles install-ros-jazzy
-dotfiles update-ros-jazzy
-dotfiles update-flake-inputs
-dotfiles update-neovim-plugins
-dotfiles install-hazkey
-```
+## Install
 
-## Initial Setup
-
-Prerequisites:
-
-- Ubuntu 26 host
-- a regular user with `sudo`
-- `dialout` group membership if you use USB serial devices
-
-Install multi-user Nix first. The official Linux command is:
+From the repository root:
 
 ```bash
 curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install | sh -s -- --daemon
 ```
 
-After the installer finishes, open a new login shell and run:
+Open a new login shell, then apply the default user configuration:
 
 ```bash
-cd ~/dotfiles
-nix run path:.#dotfiles -- install
+nix run path:.#dotfiles -- install --skip-ros-jazzy
 ```
 
-`nix run path:.#dotfiles -- install` performs:
+The default configuration is `homeConfigurations.sopi`. Explicit variants
+are also available:
 
-1. Host package installation with `apt` for `distrobox`, `podman`, build tools, and related dependencies
-2. Home Manager activation
-3. Host-side package provisioning, including Rust and Node.js through Nix
-4. udev rule synchronization from `udev/rules.d/`
-5. `ros-jazzy` container creation from `distrobox/ros-jazzy.ini`
-6. ROS 2 Jazzy, `colcon`, and `rosdep` installation inside the container
-7. `rosdep update`
+```bash
+nix run github:nix-community/home-manager -- switch --flake .#sopi-native
+nix run github:nix-community/home-manager -- switch --flake .#sopi-wsl
+```
 
-Operations that require root privileges:
+`dotfiles install` and `dotfiles update` also apply the xrdp system integration
+when `sudo` is available. This installs:
 
-- host package installation with `apt-get`
-- copying managed udev rules into `/etc/udev/rules.d/`
-- container-side `apt`, `rosdep init`, and `/etc/profile.d` updates
-- adding the user to `dialout`
+- host packages for `xrdp` and `xorgxrdp` when missing
+- `/etc/xrdp/startwm.sh`, `session-env.sh`, `reconnectwm.sh`, `sesman.ini`, `xrdp.ini`, and WSL-only XFCE panel defaults
+- `/etc/pam.d/xrdp-sesman` using the host distribution's standard PAM stack
+- `/etc/X11/xrdp/xorg.conf` for xorgxrdp startup
+- `xrdp-sesman.service` and `xrdp.service`
 
-## Daily Use
+The managed session is XFCE with GNOME-like theming, Hazkey/Fcitx defaults, and
+an X11-only startup path. Windows clients should connect to `localhost:3390`
+with the built-in Remote Desktop client. Port `3390` is used to avoid
+colliding with Windows' own RDP listener on `3389`. Use the Linux account name
+and password for the managed user, for example `sopi`.
 
-Re-apply only host-side configuration:
+## Daily commands
 
 ```bash
 dotfiles switch
-```
-
-Update flake inputs, refresh Neovim plugins, re-apply Home Manager, re-apply udev rules, and update the ROS container:
-
-```bash
 dotfiles update
-```
-
-Enter the ROS environment:
-
-```bash
-dotfiles jazzy
-```
-
-The shell alias is also available:
-
-```bash
-jazzy
-```
-
-`jazzy` calls `dotfiles jazzy`, so both paths use the same container entry logic.
-
-## Health Check
-
-```bash
 dotfiles healthcheck
-```
-
-It checks:
-
-- host commands: `nix`, `dotfiles`, `cargo`, `rustc`, `node`, `distrobox`, `distrobox-assemble`, `podman`, `nvim`
-- host `dialout` membership
-- managed udev rule installation status
-- presence of the `ros-jazzy` container
-- container commands: `ros2`, `colcon`, `rosdep`, `nvim`, `distrobox-host-exec`
-- host `git` invocation from inside the container
-- host `nvim` invocation from inside the container
-- visibility of `/dev/ttyUSB*` and `/dev/ttyACM*`
-
-## udev Rules
-
-Managed udev rules live in:
-
-```text
-udev/rules.d/
-```
-
-Rules must include `dotfiles-` in the filename. They are synchronized to:
-
-```text
-/etc/udev/rules.d/
-```
-
-Apply managed rules:
-
-```bash
+dotfiles cleanup
+dotfiles remote status
+dotfiles backups list
+dotfiles rollback [generation]
 dotfiles udev apply
-```
-
-Check that installed rules match the repository copy:
-
-```bash
 dotfiles udev status
 ```
 
-The default managed rule file is:
+`dotfiles install-hazkey` is retained for compatibility. It now reapplies the
+Home Manager generation, which installs Hazkey and the canonical Fcitx5 profile
+without using a distribution-specific installer.
 
-- `udev/rules.d/70-dotfiles-serial-access.rules`
+## Optional ROS environment
 
-It sets `dialout`, `0660`, and `uaccess` for `ttyUSB*` and `ttyACM*`.
-
-## Backups and Rollback
-
-Home Manager collision backups and imported legacy backups are stored in:
-
-```text
-~/.local/state/dotfiles/backups/generations/
-```
-
-- default retention: `10`
-- override with: `DOTFILES_BACKUP_LIMIT=<n>`
-- list generations: `dotfiles backups list`
-- rollback latest generation: `dotfiles rollback`
-- rollback a specific generation: `dotfiles rollback <generation>`
-
-## Troubleshooting
-
-If USB devices are not visible:
-
-1. Check `id -nG` on the host and confirm `dialout` is present.
-2. If it is missing, run `sudo usermod -aG dialout "$USER"` and log in again.
-3. Check `ls /dev/ttyUSB* /dev/ttyACM* 2>/dev/null` on the host.
-4. Run `dotfiles udev status`.
-5. Run `dotfiles healthcheck`.
-6. Add device-specific rules under `udev/rules.d/` if the generic serial rules are not enough.
-7. Check `systemctl --user status podman.socket` if rootless Podman is not working.
-
-To recreate the container:
+The ROS container is optional and is skipped by the default install command.
+To enable it:
 
 ```bash
-ROS_JAZZY_BOX_REPLACE=1 dotfiles install-ros-jazzy
+dotfiles install-ros-jazzy
+dotfiles jazzy
 ```
 
-## Recommended Workflow
+Container creation may require rootless container support from the host. If
+the host does not provide it, continue using the user configuration with
+`--skip-ros-jazzy`.
 
-- Use host-side Neovim to edit the workspace.
-- Open the workspace on the host filesystem.
-- Run `colcon build`, `ros2 run`, and other ROS commands after `dotfiles jazzy`.
-- Keep the editor on the host and the ROS runtime inside the container.
+## NixOS
+
+For machines running NixOS itself, the flake includes reusable Native and WSL
+system configurations:
+
+```bash
+sudo nixos-rebuild switch --flake .#disk2-desktop
+sudo nixos-rebuild switch --flake .#wsl-desktop
+```
+
+Both configurations share the same locale, fonts, Fcitx5/Hazkey setup, audio
+stack, user defaults, and the xrdp-backed XFCE desktop module.
+
+## Backups and udev
+
+Home Manager collision backups are stored under
+`~/.local/state/dotfiles/backups/generations/`. The retention limit defaults to
+10 and can be changed with `DOTFILES_BACKUP_LIMIT`.
+
+Managed udev rules live in `udev/rules.d/`. Applying them requires privileges;
+this step can be skipped on systems where udev is not available.

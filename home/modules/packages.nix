@@ -1,30 +1,72 @@
 {
   pkgs,
   dotfilesPackage,
+  fcitx5HazkeyPackage,
+  hazkeyPackage,
   ...
 }: {
   home.packages = with pkgs; [
     alacritty
+    adwaita-icon-theme
+    cacert
     cargo
+    clang
     clippy
+    cmake
     curl
-    fcitx5
+    dconf
+    dbus
+    exo
+    fcitx5HazkeyPackage
     fcitx5-gtk
+    fcitx5-mozc
+    hazkeyPackage
+    qt6Packages.fcitx5-configtool
     qt6Packages.fcitx5-qt
     distrobox
     fd
+    file
     fontconfig
+    fuse-overlayfs
     git
+    gnupg
+    gnumake
+    gnome-themes-extra
+    jq
+    lld
     neovim
     nodejs
+    papirus-icon-theme
+    pavucontrol
+    pkg-config
     podman
+    pulseaudio
+    python3
     ripgrep
     rust-analyzer
     rustc
     rustfmt
+    shadow
+    slirp4netns
+    thunar
     tmux
+    noto-fonts-cjk-sans
+    noto-fonts-cjk-serif
     udev-gothic-nf
     unzip
+    xf86videodummy
+    xfce4-panel
+    xfce4-session
+    xfce4-settings
+    xfce4-whiskermenu-plugin
+    xfconf
+    xfdesktop
+    xfwm4
+    xdg-user-dirs
+    xauth
+    xkeyboard_config
+    xorgserver
+    xz
     dotfilesPackage
     zsh
   ];

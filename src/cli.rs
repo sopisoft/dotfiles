@@ -32,6 +32,10 @@ pub enum Command {
     UpdateFlakeInputs,
     UpdateNeovimPlugins,
     SyncNvimPack,
+    Remote {
+        #[command(subcommand)]
+        command: RemoteCommand,
+    },
     Udev {
         #[command(subcommand)]
         command: UdevCommand,
@@ -60,6 +64,12 @@ pub enum BackupCommand {
 
 #[derive(Debug, Subcommand)]
 pub enum UdevCommand {
+    Apply,
+    Status,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum RemoteCommand {
     Apply,
     Status,
 }

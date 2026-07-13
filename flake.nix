@@ -7,12 +7,17 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nixos-wsl = {
+      url = "github:nix-community/NixOS-WSL";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
     self,
     nixpkgs,
     home-manager,
+    nixos-wsl,
     ...
   }: let
     lib = nixpkgs.lib;
@@ -22,7 +27,6 @@
     mkPkgs = system:
       import nixpkgs {
         inherit system;
-        config.allowUnfree = false;
       };
   in {
     packages = forAllSystems (system: let
@@ -38,6 +42,11 @@
         ];
         cargoLock.lockFile = ./Cargo.lock;
         doCheck = false;
+      };
+      hazkey = pkgs.callPackage ./pkgs/hazkey.nix {};
+      fcitx5-hazkey = pkgs.callPackage ./pkgs/fcitx5-hazkey.nix {
+        fcitx5Mozc = pkgs.fcitx5-mozc;
+        hazkeyPackage = self.packages.${system}.hazkey;
       };
       default = self.packages.${system}.dotfiles;
     });
@@ -67,25 +76,89 @@
 
     formatter = forAllSystems (system: (mkPkgs system).alejandra);
 
-    homeConfigurations.${username} = let
+    nixosConfigurations.disk2-desktop = let
       system = "x86_64-linux";
-      pkgs = mkPkgs system;
     in
-      home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
-        extraSpecialArgs = {
+      nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = {
           inherit username;
-          dotfilesPackage = self.packages.${system}.dotfiles;
+          hazkeyPackage = self.packages.${system}.hazkey;
         };
         modules = [
-          ./home/home.nix
+          ./nixos/disk2-desktop.nix
+          home-manager.nixosModules.home-manager
           {
-            home = {
-              username = username;
-              homeDirectory = "/home/${username}";
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.extraSpecialArgs = {
+              inherit username;
+              dotfilesPackage = self.packages.${system}.dotfiles;
+              hazkeyPackage = self.packages.${system}.hazkey;
+              fcitx5HazkeyPackage = self.packages.${system}.fcitx5-hazkey;
+            };
+            home-manager.users.${username} = import ./home/home.nix;
+          }
+        ];
+      };
+
+    nixosConfigurations.wsl-desktop = let
+      system = "x86_64-linux";
+    in
+      nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = {
+          inherit username;
+          hazkeyPackage = self.packages.${system}.hazkey;
+        };
+        modules = [
+          nixos-wsl.nixosModules.default
+          ./nixos/wsl-desktop.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.extraSpecialArgs = {
+              inherit username;
+              dotfilesPackage = self.packages.${system}.dotfiles;
+              hazkeyPackage = self.packages.${system}.hazkey;
+              fcitx5HazkeyPackage = self.packages.${system}.fcitx5-hazkey;
+            };
+            home-manager.users.${username} = {
+              imports = [./home/home.nix];
+              sopi.syncNvimPack = false;
             };
           }
         ];
       };
+
+    homeConfigurations = let
+      system = "x86_64-linux";
+      pkgs = mkPkgs system;
+      mkHome = environment:
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          extraSpecialArgs = {
+            inherit username;
+            dotfilesPackage = self.packages.${system}.dotfiles;
+            hazkeyPackage = self.packages.${system}.hazkey;
+            fcitx5HazkeyPackage = self.packages.${system}.fcitx5-hazkey;
+          };
+          modules = [
+            ./home/home.nix
+            {
+              sopi.environment = environment;
+              home = {
+                username = username;
+                homeDirectory = "/home/${username}";
+              };
+            }
+          ];
+        };
+    in {
+      ${username} = mkHome "native";
+      "${username}-native" = mkHome "native";
+      "${username}-wsl" = mkHome "wsl";
+    };
   };
 }

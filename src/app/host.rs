@@ -1,38 +1,17 @@
-use super::{container, nvim, system, udev};
+use super::{container, nvim, remote, system, udev};
 use crate::backup;
 use crate::context::{HostContext, ROS_JAZZY_CONTAINER_NAME};
 use crate::home_manager;
 use anyhow::{Context, Result};
 
-const HOST_PACKAGES: &[&str] = &[
-    "build-essential",
-    "ca-certificates",
-    "curl",
-    "dconf-cli",
-    "dbus-user-session",
-    "distrobox",
-    "fuse-overlayfs",
-    "git",
-    "gnupg",
-    "jq",
-    "podman",
-    "slirp4netns",
-    "uidmap",
-    "unzip",
-    "xdg-user-dirs",
-    "xz-utils",
-];
-
 pub fn install(
     context: &HostContext,
-    skip_host_packages: bool,
+    _skip_host_packages: bool,
     skip_ros_jazzy: bool,
 ) -> Result<()> {
     require_nix(context)?;
-    if !skip_host_packages && system::command_exists("apt-get") {
-        install_host_packages(context)?;
-    }
     home_manager::apply_home_manager(context)?;
+    remote::apply(context)?;
     udev::apply(context)?;
     if !skip_ros_jazzy {
         install_ros_jazzy(context)?;
@@ -45,6 +24,7 @@ pub fn update(context: &HostContext, skip_ros_jazzy: bool) -> Result<()> {
     update_flake_inputs(context)?;
     nvim::update_neovim_plugins_as_target(context)?;
     switch(context)?;
+    remote::apply(context)?;
     udev::apply(context)?;
     if skip_ros_jazzy {
         return Ok(());
@@ -167,25 +147,6 @@ pub fn update_flake_inputs(context: &HostContext) -> Result<()> {
         .status()
         .context("failed to update flake inputs")?;
     context.status_ok(status, "nix flake update")
-}
-
-fn install_host_packages(context: &HostContext) -> Result<()> {
-    context.log("Installing host packages with apt-get");
-    system::run_sudo(["apt-get", "update"])?;
-    let mut args = vec!["apt-get", "install", "-y"];
-    args.extend(HOST_PACKAGES);
-    system::run_sudo(args)?;
-
-    if system::command_exists("systemctl") {
-        let _ = context
-            .command_as_target("systemctl")
-            .arg("--user")
-            .arg("enable")
-            .arg("--now")
-            .arg("podman.socket")
-            .status();
-    }
-    Ok(())
 }
 
 fn require_nix(context: &HostContext) -> Result<std::path::PathBuf> {

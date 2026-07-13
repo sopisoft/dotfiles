@@ -1,5 +1,6 @@
 {...}: {
   imports = [
+    ./modules/options.nix
     ./modules/base.nix
     ./modules/packages.nix
     ./modules/shell.nix

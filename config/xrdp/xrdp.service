@@ -1,0 +1,13 @@
+[Unit]
+Description=xrdp daemon
+After=network.target xrdp-sesman.service
+Requires=xrdp-sesman.service
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/xrdp --nodaemon --config /etc/xrdp/xrdp.ini
+ExecStop=/usr/bin/xrdp --kill
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

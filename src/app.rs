@@ -5,12 +5,14 @@ mod healthcheck;
 mod hooks;
 mod host;
 mod nvim;
+mod remote;
 mod system;
 mod udev;
 
 use crate::backup;
 use crate::cli::{
-    BackupCommand, Cli, Command, ContainerCommand, HookCommand, InternalCommand, UdevCommand,
+    BackupCommand, Cli, Command, ContainerCommand, HookCommand, InternalCommand, RemoteCommand,
+    UdevCommand,
 };
 use crate::context::HostContext;
 use anyhow::Result;
@@ -40,6 +42,7 @@ fn dispatch_cli(cli: Cli) -> Result<()> {
         Command::UpdateFlakeInputs => host::update_flake_inputs(&context),
         Command::UpdateNeovimPlugins => nvim::update_neovim_plugins(),
         Command::SyncNvimPack => nvim::sync_nvim_pack(),
+        Command::Remote { command } => dispatch_remote(&context, command),
         Command::Udev { command } => dispatch_udev(&context, command),
         Command::Backups { command } => backups(&context, command),
         Command::Rollback { generation } => backup::rollback(&context, generation.as_deref()),
@@ -51,6 +54,13 @@ fn dispatch_udev(context: &HostContext, command: UdevCommand) -> Result<()> {
     match command {
         UdevCommand::Apply => udev::apply(context),
         UdevCommand::Status => udev::status(context),
+    }
+}
+
+fn dispatch_remote(context: &HostContext, command: RemoteCommand) -> Result<()> {
+    match command {
+        RemoteCommand::Apply => remote::apply(context),
+        RemoteCommand::Status => remote::status(context),
     }
 }
 

@@ -15,6 +15,7 @@ const HOST_COMMANDS: &[&str] = &[
     "podman",
     "rustc",
     "dotfiles",
+    "xrdp",
 ];
 
 const CONTAINER_COMMANDS: &[&str] = &["ros2", "colcon", "rosdep", "nvim", "distrobox-host-exec"];
@@ -43,6 +44,10 @@ pub fn host(context: &HostContext) -> Result<()> {
 
     if let Err(error) = super::udev::status(context) {
         eprintln!("[fail] udev status check failed: {error:#}");
+        ok = false;
+    }
+    if let Err(error) = super::remote::status(context) {
+        eprintln!("[fail] remote desktop status check failed: {error:#}");
         ok = false;
     }
 

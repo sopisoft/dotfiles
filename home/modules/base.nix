@@ -1,14 +1,21 @@
-{...}: {
+{lib, ...}: let
+  defaults = import ../../config/defaults.nix;
+in {
   home.stateVersion = "25.05";
 
   programs.home-manager.enable = true;
 
   xdg.enable = true;
 
+  home.file."dotfiles" = {
+    source = lib.cleanSource ../..;
+    recursive = true;
+  };
+
   fonts.fontconfig = {
     enable = true;
     defaultFonts = {
-      monospace = ["UDEV Gothic NFLG"];
+      inherit (defaults.fonts) sansSerif serif monospace;
     };
   };
 
