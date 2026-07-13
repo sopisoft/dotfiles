@@ -22,9 +22,8 @@ const MANAGED_TARGETS: &[&str] = &[
     ".zshrc",
     ".local/bin/dotfiles",
     ".local/bin/vim",
-    ".local/bin/x-terminal-emulator",
     ".config/alacritty",
-    ".config/autostart/fcitx5.desktop",
+    ".config/autostart/org.fcitx.Fcitx5.desktop",
     ".config/direnv",
     ".config/environment.d",
     ".config/fontconfig/conf.d",
@@ -33,15 +32,14 @@ const MANAGED_TARGETS: &[&str] = &[
     ".config/mozilla/firefox",
     ".config/nix",
     ".config/nvim",
-    ".config/plasma-workspace/env/fcitx5.sh",
     ".config/starship.toml",
     ".config/user-dirs.conf",
     ".config/user-dirs.dirs",
     ".config/user-dirs.locale",
+    ".config/xfce4/xfconf/xfce-perchannel-xml/xfce4-keyboard-shortcuts.xml",
     ".config/xdg-terminals.list",
     ".config/zellij",
     ".config/zsh",
-    ".local/bin/start-fcitx5",
 ];
 
 const LEGACY_TARGETS: &[&str] = &[

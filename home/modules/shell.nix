@@ -9,7 +9,6 @@
     ".zshrc".source = ../../zsh/.zshrc;
     ".local/bin/dotfiles".source = "${dotfilesPackage}/bin/dotfiles";
     ".local/bin/vim".source = "${pkgs.neovim}/bin/nvim";
-    ".local/bin/x-terminal-emulator".source = "${pkgs.alacritty}/bin/alacritty";
   };
 
   xdg.configFile."zsh" = {
