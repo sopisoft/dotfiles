@@ -3,24 +3,10 @@ use std::fs;
 use std::os::unix::fs as unix_fs;
 use std::path::Path;
 
-pub(super) fn symlink_exists(path: &Path) -> bool {
+pub(crate) fn symlink_exists(path: &Path) -> bool {
     fs::symlink_metadata(path)
         .map(|metadata| metadata.file_type().is_symlink())
         .unwrap_or(false)
-}
-
-pub(super) fn is_nix_store_symlink(path: &Path) -> Result<bool> {
-    let metadata = match fs::symlink_metadata(path) {
-        Ok(metadata) => metadata,
-        Err(_) => return Ok(false),
-    };
-    if !metadata.file_type().is_symlink() {
-        return Ok(false);
-    }
-
-    let target = fs::read_link(path)
-        .with_context(|| format!("failed to read symlink target for {}", path.display()))?;
-    Ok(target.starts_with("/nix/store"))
 }
 
 pub(super) fn copy_path(source: &Path, destination: &Path) -> Result<()> {
@@ -72,18 +58,4 @@ pub(super) fn remove_path(path: &Path) -> Result<()> {
     } else {
         fs::remove_dir_all(path).with_context(|| format!("failed to remove {}", path.display()))
     }
-}
-
-pub(super) fn move_path(source: &Path, destination: &Path) -> Result<()> {
-    if let Some(parent) = destination.parent() {
-        fs::create_dir_all(parent)
-            .with_context(|| format!("failed to create {}", parent.display()))?;
-    }
-    fs::rename(source, destination).with_context(|| {
-        format!(
-            "failed to move {} to {}",
-            source.display(),
-            destination.display()
-        )
-    })
 }

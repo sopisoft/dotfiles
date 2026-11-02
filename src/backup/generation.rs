@@ -43,17 +43,6 @@ impl BackupGeneration {
         Ok(())
     }
 
-    pub(super) fn ingest_existing_backup(
-        &mut self,
-        source: &Path,
-        original_path: &Path,
-    ) -> Result<()> {
-        let stored_path = self.stored_path_for(source)?;
-        backup_fs::move_path(source, &stored_path)?;
-        self.record_entry(original_path, stored_path);
-        Ok(())
-    }
-
     pub(super) fn finish(self) -> Result<()> {
         let manifest_path = self.generation_dir.join("manifest.json");
         let bytes =

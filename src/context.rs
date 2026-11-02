@@ -59,13 +59,11 @@ impl HostContext {
 
     pub fn target_path(&self) -> OsString {
         let mut path = OsString::new();
-        path.push(self.target_home.join(".cargo/bin"));
-        path.push(OsStr::new(":"));
         path.push(self.target_home.join(".local/bin"));
         path.push(OsStr::new(":"));
-        path.push(self.target_home.join(".nix-profile/bin"));
+        path.push(self.target_home.join(".local/share/mise/shims"));
         path.push(OsStr::new(":"));
-        path.push("/nix/var/nix/profiles/default/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
+        path.push("/home/linuxbrew/.linuxbrew/bin:/opt/homebrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
         path
     }
 
@@ -155,9 +153,7 @@ fn resolve_repo_root(target_home: &Path) -> Result<PathBuf> {
 }
 
 fn is_dotfiles_root(path: &Path) -> bool {
-    path.join("flake.nix").is_file()
-        && path.join("home/home.nix").is_file()
-        && path.join("Cargo.toml").is_file()
+    path.join("Cargo.toml").is_file()
 }
 
 fn resolve_backup_root(target_home: &Path) -> PathBuf {

@@ -41,17 +41,6 @@ where
     }
 }
 
-pub fn command_exists(command: &str) -> bool {
-    ProcessCommand::new("bash")
-        .arg("-lc")
-        .arg("command -v -- \"$1\" >/dev/null 2>&1")
-        .arg("bash")
-        .arg(command)
-        .status()
-        .map(|status| status.success())
-        .unwrap_or(false)
-}
-
 pub fn can_run_privileged_command() -> bool {
     if is_current_root().unwrap_or(false) {
         return true;

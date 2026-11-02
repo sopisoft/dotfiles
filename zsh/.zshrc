@@ -1,9 +1,11 @@
+typeset -U path PATH
 # Load only the managed config files in a predictable order.
 for config_file in \
     00-completion.zsh \
     10-options.zsh \
     20-aliases.zsh \
     30-direnv.zsh \
+    40-deja.zsh \
     70-prompt.zsh \
     80-zellij.zsh
 do

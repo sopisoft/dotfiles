@@ -1,0 +1,1 @@
+/nix/store/dh4mmfzw56d12hxkqw2d8q0nv2p7rv2j-home-manager-files/.config/zsh/35-nvm.zsh

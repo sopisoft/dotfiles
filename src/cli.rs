@@ -9,15 +9,12 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    Install {
-        #[arg(long, default_value_t = false)]
-        skip_host_packages: bool,
-    },
+    Deploy,
+    Install,
     Update,
     Switch,
     Healthcheck,
     Cleanup,
-    UpdateFlakeInputs,
     UpdateNeovimPlugins,
     SyncNvimPack,
     Remote {
@@ -46,7 +43,6 @@ pub enum Command {
 pub enum BackupCommand {
     List,
     Rollback { generation: Option<String> },
-    ImportLegacy,
     Prune,
 }
 

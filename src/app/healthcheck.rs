@@ -3,7 +3,7 @@ use crate::context::HostContext;
 use anyhow::{Result, bail};
 
 const HOST_COMMANDS: &[&str] = &[
-    "cargo", "nix", "node", "nvim", "pixi", "rustc", "dotfiles", "x11vnc",
+    "brew", "git", "mise", "node", "nvim", "pixi", "rustc", "dotfiles", "zellij", "zsh",
 ];
 pub fn host(context: &HostContext) -> Result<()> {
     let mut ok = true;

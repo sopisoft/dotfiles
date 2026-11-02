@@ -1,5 +1,1 @@
-# Keep short aliases focused on commands used every day.
-alias l='ls -CF'
-alias la='ls -A'
-alias ll='ls -alF'
-alias vim='nvim'
+/nix/store/dh4mmfzw56d12hxkqw2d8q0nv2p7rv2j-home-manager-files/.config/zsh/20-aliases.zsh

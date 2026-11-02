@@ -1,3 +1,4 @@
+mod deploy;
 mod healthcheck;
 mod hooks;
 mod host;
@@ -23,12 +24,12 @@ pub fn run() -> Result<()> {
 fn dispatch_cli(cli: Cli) -> Result<()> {
     let context = HostContext::detect()?;
     match cli.command {
-        Command::Install { skip_host_packages } => host::install(&context, skip_host_packages),
+        Command::Deploy => host::switch(&context),
+        Command::Install => host::install(&context),
         Command::Update => host::update(&context),
         Command::Switch => host::switch(&context),
         Command::Healthcheck => healthcheck::host(&context),
         Command::Cleanup => host::cleanup(&context),
-        Command::UpdateFlakeInputs => host::update_flake_inputs(&context),
         Command::UpdateNeovimPlugins => nvim::update_neovim_plugins(),
         Command::SyncNvimPack => nvim::sync_nvim_pack(),
         Command::Remote { command } => dispatch_remote(&context, command),
@@ -57,10 +58,6 @@ fn backups(context: &HostContext, command: BackupCommand) -> Result<()> {
     match command {
         BackupCommand::List => backup::print_backup_list(context),
         BackupCommand::Rollback { generation } => backup::rollback(context, generation.as_deref()),
-        BackupCommand::ImportLegacy => {
-            backup::import_legacy_backups(context)?;
-            backup::prune_backups(context)
-        }
         BackupCommand::Prune => backup::prune_backups(context),
     }
 }

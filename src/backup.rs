@@ -1,54 +1,20 @@
 mod fs;
 mod generation;
 
-use self::fs::{copy_path, is_nix_store_symlink, remove_path, symlink_exists};
+use self::fs::{copy_path, remove_path};
 use self::generation::BackupGeneration;
 use crate::context::HostContext;
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
-use std::ffi::OsStr;
 use std::fs as std_fs;
 use std::path::PathBuf;
 use time::{format_description::FormatItem, macros::format_description};
-use walkdir::WalkDir;
+
+pub(crate) use self::fs::symlink_exists;
 
 pub(super) const TIMESTAMP_FORMAT: &[FormatItem<'static>] =
     format_description!("[year][month][day]T[hour][minute][second]Z");
-
-const MANAGED_TARGETS: &[&str] = &[
-    ".zshenv",
-    ".zprofile",
-    ".zshrc",
-    ".local/bin/dotfiles",
-    ".local/bin/vim",
-    ".config/alacritty",
-    ".config/autostart/org.fcitx.Fcitx5.desktop",
-    ".config/direnv",
-    ".config/environment.d",
-    ".config/fontconfig/conf.d",
-    ".config/gnome-xdg-terminals.list",
-    ".config/fcitx5/profile",
-    ".config/mozilla/firefox",
-    ".config/nix",
-    ".config/nvim",
-    ".config/starship.toml",
-    ".config/user-dirs.conf",
-    ".config/user-dirs.dirs",
-    ".config/user-dirs.locale",
-    ".config/xfce4/xfconf/xfce-perchannel-xml/xfce4-keyboard-shortcuts.xml",
-    ".config/xdg-terminals.list",
-    ".config/zellij",
-    ".config/zsh",
-];
-
-const LEGACY_TARGETS: &[&str] = &[
-    ".config/zsh/35-nvm.zsh",
-    ".config/zsh/40-node-nvm.zsh",
-    ".config/zsh/50-ros.zsh",
-    ".config/zsh/60-prompt.zsh",
-    ".config/zsh/70-zellij.zsh",
-];
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackupManifest {
@@ -65,12 +31,10 @@ pub struct BackupEntry {
     pub stored_path: String,
 }
 
-pub fn prepare_for_activation(context: &HostContext) -> Result<()> {
+pub fn prepare_for_deployment(context: &HostContext, targets: &[PathBuf]) -> Result<()> {
     std_fs::create_dir_all(generations_dir(context))
         .with_context(|| format!("failed to create {}", generations_dir(context).display()))?;
-    import_legacy_backups(context)?;
-    cleanup_legacy_managed_symlinks(context)?;
-    backup_home_manager_collisions(context)?;
+    backup_collisions(context, targets)?;
     prune_backups(context)
 }
 
@@ -127,41 +91,6 @@ pub fn rollback(context: &HostContext, generation: Option<&str>) -> Result<()> {
     Ok(())
 }
 
-pub fn import_legacy_backups(context: &HostContext) -> Result<()> {
-    let mut legacy_entries = Vec::new();
-    for entry in WalkDir::new(&context.target_home)
-        .follow_links(false)
-        .into_iter()
-        .filter_map(Result::ok)
-    {
-        let path = entry.path();
-        if path.starts_with(&context.backup_root) {
-            continue;
-        }
-        let Some(file_name) = path.file_name().and_then(OsStr::to_str) else {
-            continue;
-        };
-        if let Some(original_name) = file_name.split_once(".hm-backup-").map(|value| value.0) {
-            legacy_entries.push((path.to_path_buf(), path.with_file_name(original_name)));
-            continue;
-        }
-        if let Some(original_name) = strip_bak_suffix(file_name) {
-            legacy_entries.push((path.to_path_buf(), path.with_file_name(original_name)));
-        }
-    }
-
-    if legacy_entries.is_empty() {
-        return Ok(());
-    }
-
-    let mut generation = BackupGeneration::create(context, "legacy-import")?;
-    for (legacy_path, original_path) in legacy_entries {
-        generation.ingest_existing_backup(&legacy_path, &original_path)?;
-    }
-    generation.finish()?;
-    prune_backups(context)
-}
-
 pub fn prune_backups(context: &HostContext) -> Result<()> {
     let generations_dir = generations_dir(context);
     if !generations_dir.exists() {
@@ -191,47 +120,28 @@ pub(super) fn generations_dir(context: &HostContext) -> PathBuf {
     context.backup_root.join("generations")
 }
 
-fn backup_home_manager_collisions(context: &HostContext) -> Result<()> {
-    let candidates = MANAGED_TARGETS
-        .iter()
-        .map(|relative| context.target_home.join(relative))
-        .chain(
-            LEGACY_TARGETS
-                .iter()
-                .map(|relative| context.target_home.join(relative)),
-        );
-
+fn backup_collisions(context: &HostContext, targets: &[PathBuf]) -> Result<()> {
     let mut collisions = BTreeSet::new();
-    for path in candidates {
+    for path in targets {
         if !path.exists() && !symlink_exists(&path) {
             continue;
         }
-        if is_nix_store_symlink(&path)? {
+        if symlink_exists(path) {
             continue;
         }
-        collisions.insert(path);
+        collisions.insert(path.clone());
     }
 
     if collisions.is_empty() {
         return Ok(());
     }
 
-    let mut generation = BackupGeneration::create(context, "pre-home-manager")?;
+    let mut generation = BackupGeneration::create(context, "pre-deploy")?;
     for path in collisions {
         generation.backup_and_remove(&path)?;
     }
     generation.finish()?;
     prune_backups(context)
-}
-
-fn cleanup_legacy_managed_symlinks(context: &HostContext) -> Result<()> {
-    for relative in LEGACY_TARGETS {
-        let path = context.target_home.join(relative);
-        if is_nix_store_symlink(&path)? {
-            remove_path(&path)?;
-        }
-    }
-    Ok(())
 }
 
 fn select_manifest(context: &HostContext, generation: Option<&str>) -> Result<BackupManifest> {
@@ -251,9 +161,4 @@ fn select_manifest(context: &HostContext, generation: Option<&str>) -> Result<Ba
             .next()
             .context("no latest backup available")
     }
-}
-
-fn strip_bak_suffix(file_name: &str) -> Option<&str> {
-    let (base, suffix) = file_name.rsplit_once(".bak.")?;
-    suffix.chars().all(|ch| ch.is_ascii_digit()).then_some(base)
 }

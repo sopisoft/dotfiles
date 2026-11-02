@@ -1,5 +1,3 @@
-# Shared serial-device access for ROS, LiDAR, and MCU development.
-#
 # Add project- or device-specific rules as additional `*-dotfiles-*.rules`
 # files in this directory. `xtask udev apply` syncs them to
 # `/etc/udev/rules.d/`.
